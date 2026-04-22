@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>健康価値観診断</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background: linear-gradient(160deg, #F4F1EB, #EBF5F0); min-height: 100vh; font-family: 'Noto Sans JP', sans-serif; padding-bottom: 48px; }
+    button:active { opacity: 0.75; }
+
+    #app { max-width: 480px; margin: 0 auto; padding: 20px 16px; }
+
+    .card { background: #fff; border-radius: 18px; padding: 22px 18px; margin-bottom: 14px; box-shadow: 0 2px 14px rgba(0,0,0,0.06); border: 1px solid #EAE6DF; }
+
+    /* イントロ */
+    .badge { display: inline-block; background: #EAF5EE; color: #1B6B3A; font-size: 11px; font-weight: 700; padding: 4px 14px; border-radius: 99px; margin-bottom: 18px; letter-spacing: 0.06em; }
+    .main-title { font-family: 'Noto Serif JP', serif; font-size: 28px; font-weight: 700; color: #1A2B1A; line-height: 1.55; margin-bottom: 18px; }
+    .main-title em { color: #2E8B57; font-style: normal; }
+    .intro-text { font-size: 14px; color: #555; line-height: 1.8; margin-bottom: 22px; }
+    .cat-row { display: flex; gap: 8px; margin-bottom: 26px; }
+    .cat-chip { flex: 1; background: #F7F4EE; border-radius: 12px; padding: 12px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .cat-chip .icon { font-size: 22px; }
+    .cat-chip .range { font-size: 11px; color: #888; }
+    .cat-chip .name { font-size: 12px; font-weight: 700; color: #333; }
+
+    /* プログレス */
+    .progress-wrap { margin-bottom: 20px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: #999; margin-bottom: 6px; }
+    .progress-bar { height: 5px; background: #E5E0D8; border-radius: 99px; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #4CAF7D, #2D7A4F); border-radius: 99px; transition: width 0.35s ease; }
+
+    /* 設問 */
+    .cat-label { font-size: 11px; font-weight: 700; color: #999; margin-bottom: 12px; letter-spacing: 0.1em; }
+    .question-text { font-family: 'Noto Serif JP', serif; font-size: 17px; color: #1A2B1A; line-height: 1.85; font-weight: 600; }
+    .scale-wrap { display: flex; flex-direction: column; gap: 9px; margin-bottom: 14px; }
+    .scale-btn { display: flex; align-items: center; gap: 13px; padding: 14px 16px; background: #fff; border: 2px solid #E8E4DC; border-radius: 13px; cursor: pointer; width: 100%; text-align: left; }
+    .scale-btn.selected { background: #EAF5EE; border-color: #4CAF7D; }
+    .num-circle { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; background: #F0EDE6; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #555; }
+    .scale-btn.selected .num-circle { background: #2E8B57; color: #fff; }
+    .scale-label { font-size: 14px; color: #444; line-height: 1.3; }
+    .back-btn { background: none; border: none; color: #aaa; font-size: 13px; cursor: pointer; padding: 8px 0; display: block; margin: 0 auto; font-family: 'Noto Sans JP', sans-serif; }
+
+    /* ボタン共通 */
+    .primary-btn { width: 100%; padding: 17px; background: linear-gradient(135deg, #4CAF7D, #2D7A4F); color: #fff; font-size: 16px; font-weight: 700; border: none; border-radius: 13px; cursor: pointer; letter-spacing: 0.04em; box-shadow: 0 5px 18px rgba(45,122,79,0.28); font-family: 'Noto Sans JP', sans-serif; }
+    .share-btn { width: 100%; padding: 16px; background: #1A2B1A; color: #fff; font-size: 15px; font-weight: 700; border: none; border-radius: 13px; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; }
+    .restart-btn { width: 100%; padding: 16px; background: transparent; color: #2E8B57; font-size: 14px; font-weight: 700; border: 2px solid #2E8B57; border-radius: 13px; cursor: pointer; margin-top: 4px; font-family: 'Noto Sans JP', sans-serif; }
+
+    /* 結果 */
+    .result-card { border-radius: 18px; padding: 24px 18px; margin-bottom: 14px; border: 2px solid; text-align: center; }
+    .type-badge { display: inline-block; color: #fff; font-size: 14px; font-weight: 700; padding: 5px 18px; border-radius: 99px; margin-bottom: 2px; }
+    .type-subtitle { font-size: 13px; font-weight: 700; margin: 10px 0 14px; letter-spacing: 0.04em; }
+    .type-desc { font-size: 14px; color: #444; line-height: 1.85; text-align: left; margin-bottom: 14px; }
+    .feature-list { border-top: 1px solid rgba(0,0,0,0.08); padding-top: 14px; margin-top: 4px; text-align: left; }
+    .feature-item { font-size: 13px; color: #444; padding: 5px 0; line-height: 1.6; }
+    .info-tag { display: inline-block; border: 1.5px solid; border-radius: 99px; font-size: 12px; font-weight: 700; padding: 5px 14px; margin-top: 14px; }
+    .sec-title { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 14px; }
+    .advice-card { border-left: 4px solid; }
+
+    /* スコアバー */
+    .score-row { margin-bottom: 14px; }
+    .score-head { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; font-weight: 600; }
+    .score-bar-bg { height: 9px; background: #EEE; border-radius: 99px; }
+    .score-bar-fill { height: 100%; border-radius: 99px; transition: width 0.7s ease; }
+
+    /* 共有バナー */
+    .shared-banner { background: #EAF5EE; color: #1B6B3A; border-radius: 12px; padding: 11px 14px; font-size: 13px; font-weight: 700; text-align: center; margin-bottom: 14px; }
+
+    .url-box { background: #F7F4EE; border-radius: 10px; padding: 12px 14px; font-size: 11px; color: #888; word-break: break-all; margin-bottom: 12px; font-family: monospace; }
+
+    .hidden { display: none; }
+    .fade { opacity: 0; transition: opacity 0.18s ease; }
+    .fade.in { opacity: 1; }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ── データ ──────────────────────────────────────────────
+const QUESTIONS = [
+  { id:1,  text:"健康のためなら、ある程度の時間やお金を費やすのは惜しまない。", cat:"consciousness" },
+  { id:2,  text:"今が楽しければ、将来の健康のために今の楽しみを我慢したくない。", cat:"consciousness", rev:true },
+  { id:3,  text:"健康管理は、社会人としてのマナーや責任だと思う。", cat:"consciousness" },
+  { id:4,  text:"自分の健康状態は、自分自身で完全にコントロールできると思う。", cat:"consciousness" },
+  { id:5,  text:"病気になってから対策を考えるのではなく、予防が何より大切だ。", cat:"consciousness" },
+  { id:6,  text:"サプリメントや健康食品は、日常的に取り入れるべきだと思う。", cat:"consciousness" },
+  { id:7,  text:"「オーガニック」や「無添加」という言葉に惹かれる。", cat:"consciousness" },
+  { id:8,  text:"毎日、決まった時間に起床・就寝するようにしている。", cat:"action" },
+  { id:9,  text:"食事の際は、栄養バランス（野菜の量、塩分など）を常に意識している。", cat:"action" },
+  { id:10, text:"週に2回以上、汗をかくような運動を継続的に行っている。", cat:"action" },
+  { id:11, text:"自分の体重や体脂肪率、歩数などを毎日記録している。", cat:"action" },
+  { id:12, text:"定期的に健康診断を受け、結果を細かくチェックしている。", cat:"action" },
+  { id:13, text:"ストレスを感じたら、早めに解消するための自分なりの方法がある。", cat:"action" },
+  { id:14, text:"睡眠の質を高めるために、寝具や環境にこだわっている。", cat:"action" },
+  { id:15, text:"テレビやネットで話題の健康法は、とりあえず一度は試してみる。", cat:"info" },
+  { id:16, text:"健康情報は、SNSの口コミよりも専門医や公的機関の情報を信頼する。", cat:"info" },
+  { id:17, text:"新しい成分や最新の理論に基づいた健康トレンドに敏感である。", cat:"info" },
+  { id:18, text:"自分と同じような悩みを持つ人の体験談を参考にすることが多い。", cat:"info" },
+  { id:19, text:"健康に関する本や雑誌を、自分から進んで購入して読む。", cat:"info" },
+  { id:20, text:"周囲の人（家族や友人）から、健康に関するアドバイスをよく受ける。", cat:"info" },
+];
+
+const SCORE_LABELS = ["全くあてはまらない","あまりあてはまらない","どちらともいえない","ややあてはまる","非常にあてはまる"];
+
+const TYPES = {
+  active: {
+    label:"アクティブ健康型", emoji:"🏃", color:"#1B6B3A", bg:"#EAF5EE", accent:"#2E8B57",
+    subtitle:"意識も行動も高い実践者",
+    desc:"あなたは健康への高い意識を、具体的な行動でしっかり体現できています。日々の習慣が確立されており、継続力と実行力を兼ね備えた「健康優等生」タイプです。",
+    features:["✓ 予防医療への積極的な関心","✓ 運動・食事・睡眠が習慣化","✓ 健康への投資を惜しまない"],
+    advice:"さらなる高みへ：より精度の高いデータ活用（ウェアラブル端末など）や、メンタルヘルスの最適化にチャレンジしてみましょう。あなたの経験を周囲にシェアすることも社会貢献になります。",
+  },
+  aware_inactive: {
+    label:"準備・停滞型", emoji:"🤔", color:"#8B5E00", bg:"#FDF5E3", accent:"#C4860A",
+    subtitle:"意識は高いが行動が伴っていない",
+    desc:"「やったほうがいい」と十分にわかっているのに、なかなか行動に移せないあなた。知識と意識は十分です。あとは小さな一歩を踏み出すだけです。",
+    features:["△ 健康情報への感度は高い","△ 行動への意欲はあるが継続が課題","△ 完璧主義が行動のブレーキに"],
+    advice:"スモールステップが鍵：まず「1日5分のストレッチ」「週1回の体重記録」など極小の習慣から始めましょう。完璧を目指さず、60点でOKという姿勢が長続きの秘訣です。",
+  },
+  unconscious_active: {
+    label:"直感行動型", emoji:"💪", color:"#1A5C7A", bg:"#E4F3F9", accent:"#2980B9",
+    subtitle:"習慣はあるが根拠が薄い",
+    desc:"体を動かしたり生活リズムを整えたりする行動力はあるものの、「なぜそれが良いのか」という根拠への関心がやや薄いタイプ。良い習慣をより効果的にするチャンスがあります。",
+    features:["◎ 行動力・継続力は抜群","△ 情報の根拠を確かめる習慣が少ない","△ 流行に左右されやすい面も"],
+    advice:"知識で習慣を強化：今の行動に「なぜ効くのか」という科学的理解を加えると、さらに効果が上がります。かかりつけ医への相談や、信頼できる情報源のブックマークをおすすめします。",
+  },
+  unaware: {
+    label:"無関心・これから型", emoji:"🌱", color:"#5C3D8F", bg:"#F0EBF9", accent:"#7B5EA7",
+    subtitle:"今が変わり時のタイミング",
+    desc:"今は健康に関心が高くないかもしれません。でも、このアンケートに答えたこと自体が、変化の第一歩です。焦る必要はなく、自分のペースで少しずつ始めましょう。",
+    features:["🌱 変化の可能性を秘めている","🌱 小さな気づきから始められる","🌱 今からでも十分間に合う"],
+    advice:"まず「知ること」から：健康情報を1日1記事読む、近所を10分歩くなど、生活に無理なく溶け込む小さな行動から始めてみてください。習慣は積み重ねで必ず変わります。",
+  },
+};
+
+const INFO_MOD = {
+  high:   { label:"情報感度：高", tag:"トレンド敏感型", color:"#C0392B" },
+  medium: { label:"情報感度：中", tag:"バランス型",     color:"#2980B9" },
+  low:    { label:"情報感度：低", tag:"自己完結型",     color:"#27AE60" },
+};
+
+// ── ロジック ────────────────────────────────────────────
+function calcScores(ans) {
+  let c=0, a=0, i=0;
+  QUESTIONS.forEach(q => {
+    const v = ans[q.id] || 0;
+    const s = q.rev ? 6-v : v;
+    if(q.cat==="consciousness") c+=s;
+    else if(q.cat==="action")   a+=s;
+    else                         i+=s;
+  });
+  return { consciousness:c, action:a, info:i };
+}
+
+function getType(sc) {
+  const cH = sc.consciousness >= 24;
+  const aH = sc.action >= 24;
+  const iH = sc.info >= 21;
+  const iL = sc.info <= 13;
+  let t;
+  if(cH && aH) t="active";
+  else if(cH)  t="aware_inactive";
+  else if(aH)  t="unconscious_active";
+  else         t="unaware";
+  return { typeKey:t, infoMod: iH?"high": iL?"low":"medium" };
+}
+
+function encode(ans, sc, t, i) {
+  try { return btoa(encodeURIComponent(JSON.stringify({a:ans,s:sc,t,i}))); }
+  catch { return null; }
+}
+function decode(hash) {
+  try { return JSON.parse(decodeURIComponent(atob(hash))); }
+  catch { return null; }
+}
+
+// ── 状態 ────────────────────────────────────────────────
+let state = {
+  phase: "intro",   // intro | quiz | result | shared
+  currentQ: 1,
+  answers: {},
+  result: null,
+  shared: null,
+};
+
+// 共有URL検出
+const hash = location.hash.slice(1);
+if(hash) {
+  const d = decode(hash);
+  if(d) { state.shared = d; state.phase = "shared"; }
+}
+
+// ── レンダリング ─────────────────────────────────────────
+function render() {
+  const app = document.getElementById("app");
+  const { phase } = state;
+
+  let html = "";
+
+  if(phase === "shared" && state.shared) {
+    const d = state.shared;
+    html = `<div class="shared-banner">👀 シェアされた診断結果を表示しています</div>` + renderResult(TYPES[d.t], INFO_MOD[d.i], d.s, null, true);
+  }
+  else if(phase === "intro") {
+    html = renderIntro();
+  }
+  else if(phase === "quiz") {
+    html = renderQuiz();
+  }
+  else if(phase === "result" && state.result) {
+    const r = state.result;
+    html = renderResult(TYPES[r.typeKey], INFO_MOD[r.infoMod], r.scores, r.shareUrl, false);
+  }
+
+  app.innerHTML = `<div class="fade" id="content">${html}</div>`;
+  requestAnimationFrame(() => {
+    const el = document.getElementById("content");
+    if(el) el.classList.add("in");
+  });
+  window.scrollTo({ top:0, behavior:"smooth" });
+  bindEvents();
+}
+
+function renderIntro() {
+  return `
+    <div class="card">
+      <div class="badge">健康価値観診断</div>
+      <h1 class="main-title">あなたの<br><em>健康価値観</em>を<br>知りましょう</h1>
+      <p class="intro-text">20の質問に答えるだけで、あなたの「隠れた健康価値観」が明らかになります。所要時間は約5分です。</p>
+      <div class="cat-row">
+        <div class="cat-chip"><span class="icon">🧠</span><span class="range">Q1〜7</span><span class="name">意識・価値観</span></div>
+        <div class="cat-chip"><span class="icon">🏃</span><span class="range">Q8〜14</span><span class="name">行動・習慣</span></div>
+        <div class="cat-chip"><span class="icon">📡</span><span class="range">Q15〜20</span><span class="name">情報の接し方</span></div>
+      </div>
+      <button class="primary-btn" id="startBtn">診断をはじめる →</button>
+    </div>`;
+}
+
+function renderQuiz() {
+  const q = QUESTIONS[state.currentQ - 1];
+  const catLabel = q.cat==="consciousness" ? "🧠 意識・価値観" : q.cat==="action" ? "🏃 行動・習慣" : "📡 情報の接し方";
+  const pct = Math.round((state.currentQ / 20) * 100);
+  const scales = SCORE_LABELS.map((lbl,i) => {
+    const num = i+1;
+    const sel = state.answers[state.currentQ] === num ? "selected" : "";
+    return `<button class="scale-btn ${sel}" data-score="${num}">
+      <span class="num-circle">${num}</span>
+      <span class="scale-label">${lbl}</span>
+    </button>`;
+  }).join("");
+  const backBtn = state.currentQ > 1 ? `<button class="back-btn" id="backBtn">← 前の質問に戻る</button>` : "";
+  return `
+    <div class="progress-wrap">
+      <div class="progress-label"><span>Q${state.currentQ} / 20</span><span>${pct}%</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="card">
+      <div class="cat-label">${catLabel}</div>
+      <p class="question-text">${q.text}</p>
+    </div>
+    <div class="scale-wrap">${scales}</div>
+    ${backBtn}`;
+}
+
+function renderResult(type, info, scores, shareUrl, isShared) {
+  const features = type.features.map(f => `<div class="feature-item">${f}</div>`).join("");
+  const scoreBars = [
+    { label:"🧠 健康意識・価値観", val:scores.consciousness, max:35, color:"#4CAF7D" },
+    { label:"🏃 行動力・セルフケア", val:scores.action, max:35, color:"#F4A24B" },
+    { label:"📡 情報感度", val:scores.info, max:30, color:"#5C8FE0" },
+  ].map(b => `
+    <div class="score-row">
+      <div class="score-head">
+        <span style="color:#555">${b.label}</span>
+        <span style="color:${b.color}">${b.val}<span style="color:#bbb;font-weight:400">/${b.max}</span></span>
+      </div>
+      <div class="score-bar-bg">
+        <div class="score-bar-fill" style="width:0%;background:${b.color}" data-pct="${Math.round(b.val/b.max*100)}"></div>
+      </div>
+    </div>`).join("");
+
+  const shareSection = !isShared ? `
+    <div class="card">
+      <div class="sec-title">📤 結果をシェアする</div>
+      <p style="font-size:13px;color:#888;margin-bottom:14px;line-height:1.7">URLを共有すると、相手も同じ結果画面を見ることができます。</p>
+      <div class="url-box" id="shareUrl">${shareUrl || ""}</div>
+      <button class="share-btn" id="shareBtn">🔗 URLをコピー／シェア</button>
+    </div>` : "";
+
+  const restartLabel = isShared ? "自分も診断する →" : "もう一度診断する";
+
+  return `
+    <div class="result-card" style="background:${type.bg};border-color:${type.accent}80">
+      <div style="font-size:52px;margin-bottom:6px">${type.emoji}</div>
+      <div class="type-badge" style="background:${type.accent}">${type.label}</div>
+      <p class="type-subtitle" style="color:${type.color}">${type.subtitle}</p>
+      <p class="type-desc">${type.desc}</p>
+      <div class="feature-list">${features}</div>
+      <div class="info-tag" style="border-color:${info.color};color:${info.color}">📡 ${info.label}（${info.tag}）</div>
+    </div>
+    <div class="card">
+      <div class="sec-title">3軸スコア</div>
+      ${scoreBars}
+    </div>
+    <div class="card advice-card" style="border-left-color:${type.accent}">
+      <div class="sec-title" style="color:${type.color}">💡 あなたへのアドバイス</div>
+      <p style="font-size:14px;line-height:1.85;color:#444">${type.advice}</p>
+    </div>
+    ${shareSection}
+    <button class="restart-btn" id="restartBtn">${restartLabel}</button>`;
+}
+
+// ── イベント ─────────────────────────────────────────────
+function bindEvents() {
+  // スタート
+  const startBtn = document.getElementById("startBtn");
+  if(startBtn) startBtn.addEventListener("click", () => go(() => { state.phase="quiz"; }));
+
+  // 選択肢
+  document.querySelectorAll(".scale-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const score = parseInt(btn.dataset.score);
+      state.answers[state.currentQ] = score;
+      if(state.currentQ < 20) {
+        go(() => { state.currentQ++; });
+      } else {
+        const scores = calcScores(state.answers);
+        const { typeKey, infoMod } = getType(scores);
+        const encoded  = encode(state.answers, scores, typeKey, infoMod);
+        const shareUrl = `${location.href.split("#")[0]}#${encoded}`;
+        location.hash = encoded;
+        saveResult({ answers:state.answers, scores, typeKey, infoMod, shareUrl });
+        go(() => { state.result = { scores, typeKey, infoMod, shareUrl }; state.phase="result"; });
+      }
+    });
+  });
+
+  // 戻る
+  const backBtn = document.getElementById("backBtn");
+  if(backBtn) backBtn.addEventListener("click", () => go(() => { state.currentQ--; }));
+
+  // シェア
+  const shareBtn = document.getElementById("shareBtn");
+  if(shareBtn) shareBtn.addEventListener("click", async () => {
+    const url = state.result?.shareUrl;
+    if(!url) return;
+    try {
+      if(navigator.share) {
+        await navigator.share({ title:"健康価値観診断の結果", url });
+      } else if(navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+        shareBtn.textContent = "✅ コピーしました！";
+        setTimeout(() => { shareBtn.textContent = "🔗 URLをコピー／シェア"; }, 2500);
+      }
+    } catch(e) {}
+  });
+
+  // リスタート
+  const restartBtn = document.getElementById("restartBtn");
+  if(restartBtn) restartBtn.addEventListener("click", () => {
+    location.hash = "";
+    state = { phase:"intro", currentQ:1, answers:{}, result:null, shared:null };
+    render();
+  });
+
+  // スコアバーアニメ
+  setTimeout(() => {
+    document.querySelectorAll(".score-bar-fill").forEach(el => {
+      el.style.width = el.dataset.pct + "%";
+    });
+  }, 100);
+}
+
+function go(fn) {
+  const el = document.getElementById("content");
+  if(el) el.classList.remove("in");
+  setTimeout(() => { fn(); render(); }, 180);
+}
+
+// ── 初期描画 ─────────────────────────────────────────────
+render();
+
+// ── Sheets保存（GAS経由） ─────────────────────────────────
+async function saveResult(payload) {
+  try {
+    await fetch("/api/save-result", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, timestamp: new Date().toISOString() }),
+    });
+  } catch(e) { console.error(e); }
+}
+</script>
+</body>
+</html>
