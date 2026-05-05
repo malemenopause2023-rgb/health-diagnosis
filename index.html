@@ -63,6 +63,19 @@
 
     .fade { opacity: 0; transition: opacity 0.18s ease; }
     .fade.in { opacity: 1; }
+
+    /* 回答一覧（自分の結果画面のみ） */
+    .answer-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F0EDE6; }
+    .answer-row:last-child { border-bottom: none; }
+    .answer-qnum { min-width: 26px; font-weight: 700; color: #bbb; font-size: 11px; padding-top: 3px; }
+    .answer-qtext { flex: 1; color: #555; font-size: 13px; line-height: 1.6; }
+    .answer-score { min-width: 72px; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+    .dots { display: flex; gap: 3px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #E8E4DC; }
+    .dot.on-c { background: #4CAF7D; }
+    .dot.on-a { background: #F4A24B; }
+    .dot.on-i { background: #5C8FE0; }
+    .dot-label { font-size: 10px; color: #bbb; }
   </style>
 </head>
 <body>
@@ -249,7 +262,7 @@ function renderIntro() {
     <div class="card">
       <div class="badge">健康価値観診断</div>
       <h1 class="main-title">あなたの<br><em>健康価値観</em>を<br>知りましょう</h1>
-      <p class="intro-text">20の質問に答えるだけで、あなたの「隠れた健康価値観」が明らかになります。所要時間は約5分です。</p>
+      <p class="intro-text">20の質問に答えるだけで、あなたの『潜在的』健康スタイルが見えてきます。所要時間は約2分です。</p>
       <div class="cat-row">
         <div class="cat-chip"><span class="icon">🧠</span><span class="range">Q1〜7</span><span class="name">意識・価値観</span></div>
         <div class="cat-chip"><span class="icon">🏃</span><span class="range">Q8〜14</span><span class="name">行動・習慣</span></div>
