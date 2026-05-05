@@ -6,7 +6,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { answers, scores, typeKey, infoMod, shareUrl, timestamp } = req.body;
+  const { answers, scores, typeKey, infoMod, shareUrl, timestamp, gender, age } = req.body;
 
   const SUPABASE_URL     = process.env.SUPABASE_URL;
   const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
@@ -28,6 +28,8 @@ module.exports = async (req, res) => {
         score_i:   scores.info,
         answers:   answers,
         share_url: shareUrl,
+        gender:    gender || null,
+        age_group: age    || null,
       }),
     });
 
