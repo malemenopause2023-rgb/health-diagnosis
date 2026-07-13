@@ -453,9 +453,9 @@ function bindEvents() {
       state.code = val;
       e.target.value = val;
       if(!val) { state.codeStatus = null; render(); return; }
-      // 英字2桁＋数字4桁 または 数字6桁
-      if(val.length < 6 || !/^([a-z]{2}\d{4}|\d{6})$/.test(val)) {
-        state.codeStatus = val.length < 6 ? null : "ng";
+      // 6文字に達したらSupabaseで存在確認（形式チェックなし）
+      if(val.length < 6) {
+        state.codeStatus = null;
         render(); return;
       }
       state.codeStatus = "checking";
