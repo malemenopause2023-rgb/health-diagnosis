@@ -19,10 +19,9 @@
     .main-title em { color: #2E8B57; font-style: normal; }
     .intro-text { font-size: 14px; color: #555; line-height: 1.8; margin-bottom: 22px; }
     .cat-row { display: flex; gap: 8px; margin-bottom: 26px; }
-    .cat-chip { flex: 1; background: #F7F4EE; border-radius: 12px; padding: 12px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .cat-chip .icon { font-size: 22px; }
+    .cat-chip { flex: 1; background: #F7F4EE; border-radius: 12px; padding: 10px 6px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
     .cat-chip .range { font-size: 11px; color: #888; }
-    .cat-chip .name { font-size: 12px; font-weight: 700; color: #333; }
+    .cat-chip .name { font-size: 12px; font-weight: 700; color: #333; text-align: center; line-height: 1.3; }
 
     .progress-wrap { margin-bottom: 20px; }
     .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: #999; margin-bottom: 6px; }
@@ -73,6 +72,15 @@
     .age-select { width: 100%; padding: 13px 16px; background: #F7F4EE; border: 2px solid #E8E4DC; border-radius: 12px; font-size: 14px; font-weight: 700; color: #555; font-family: 'Noto Sans JP', sans-serif; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; cursor: pointer; }
     .age-select.selected { background-color: #EAF5EE; border-color: #4CAF7D; color: #1B6B3A; }
     .start-note { font-size: 11px; color: #F4A24B; text-align: center; margin-top: 10px; font-weight: 700; }
+    .code-wrap { margin-top: 16px; }
+    .code-input { width: 100%; padding: 13px 14px; border: 2px solid #E8E4DC; border-radius: 12px; font-size: 15px; font-family: monospace; color: #333; background: #F7F4EE; outline: none; letter-spacing: 0.15em; }
+    .code-input:focus { border-color: #4CAF7D; background: #fff; }
+    .code-input.valid { border-color: #4CAF7D; background: #EAF5EE; }
+    .code-input.invalid { border-color: #E05C5C; background: #FEF0EF; }
+    .code-status { font-size: 12px; margin-top: 6px; font-weight: 700; min-height: 18px; }
+    .code-status.ok { color: #2E8B57; }
+    .code-status.ng { color: #E05C5C; }
+    .code-status.checking { color: #999; }
 
     /* 回答一覧（自分の結果画面のみ） */
     .answer-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F0EDE6; }
@@ -239,7 +247,8 @@ const AGE_OPTIONS = [
 ];
 const GENDER_OPTIONS = ["男性","女性","その他・答えない"];
 
-let state = { phase:"intro", currentQ:1, answers:{}, result:null, shared:null, gender:null, age:null };
+let state = { phase:"intro", currentQ:1, answers:{}, result:null, shared:null, gender:null, age:null, code:"", codeStatus:null };
+let codeCheckTimer = null;
 
 // 共有URL検出
 const hash = location.hash.slice(1);
@@ -281,28 +290,48 @@ function renderIntro() {
   const genderBtns = GENDER_OPTIONS.map(g =>
     `<button class="gender-btn${state.gender===g?' selected':''}" data-gender="${g}">${g}</button>`
   ).join("");
-  const ageOptions = `<option value="">選択してください</option>` +
-    AGE_OPTIONS.map(a => `<option value="${a}"${state.age===a?' selected':''}>${a}</option>`).join("");
-  const canStart = state.gender && state.age;
-  const note = !canStart ? `<p class="start-note">↑ 性別と年代を選択してください</p>` : "";
+
+  const codeVal = state.code || "";
+  const codeStatus = state.codeStatus;
+  const codeClass = codeStatus==="ok" ? "valid" : codeStatus==="ng" ? "invalid" : "";
+  const codeMsg = codeStatus==="ok"       ? `<span class="code-status ok">✓ コードを確認しました</span>`
+                : codeStatus==="ng"       ? `<span class="code-status ng">✗ コードが見つかりません</span>`
+                : codeStatus==="checking" ? `<span class="code-status checking">確認中...</span>`
+                : `<span class="code-status"></span>`;
+
+  const codeOk   = !codeVal || codeStatus === "ok";
+  const canStart = state.gender && state.age && codeOk;
+  const note = !state.gender || !state.age ? `<p class="start-note">↑ 性別と年代を選択してください</p>`
+             : !codeOk ? `<p class="start-note">↑ コードを確認してください</p>` : "";
+
   return `
     <div class="card">
       <div class="badge">健康価値観診断</div>
       <h1 class="main-title">あなたの<br><em>健康価値観</em>を<br>知りましょう</h1>
       <p class="intro-text">20の質問に答えるだけで、あなたの『潜在的』健康スタイルが見えてきます。所要時間は約2分です。</p>
       <div class="cat-row">
-        <div class="cat-chip"><span class="icon">🧠</span><span class="range">Q1〜7</span><span class="name">意識・価値観</span></div>
-        <div class="cat-chip"><span class="icon">🏃</span><span class="range">Q8〜14</span><span class="name">行動・習慣</span></div>
-        <div class="cat-chip"><span class="icon">📡</span><span class="range">Q15〜20</span><span class="name">情報の接し方</span></div>
+        <div class="cat-chip"><span class="range">Q1〜7</span><span class="name">意識・価値観</span></div>
+        <div class="cat-chip"><span class="range">Q8〜14</span><span class="name">行動・習慣</span></div>
+        <div class="cat-chip"><span class="range">Q15〜20</span><span class="name">情報の接し方</span></div>
       </div>
       <div class="profile-section">
         <div class="profile-label">性別</div>
         <div class="gender-row">${genderBtns}</div>
+
         <div class="profile-label" style="margin-top:16px">年代</div>
-        <select class="age-select${state.age?' selected':''}" id="ageSelect">${ageOptions}</select>
+        <select class="age-select" id="ageSelect">
+          <option value="">選択してください</option>
+          ${AGE_OPTIONS.map(a => `<option value="${a}"${state.age===a?' selected':''}>${a}</option>`).join("")}
+        </select>
+
+        <div class="profile-label" style="margin-top:16px">企業・参加者コード <span style="font-size:11px;color:#AAA;font-weight:400">（お持ちの方のみ）</span></div>
+        <input class="code-input ${codeClass}" id="codeInput" type="text" maxlength="6"
+          placeholder="例：mw6025" value="${codeVal}" autocomplete="off" autocapitalize="none" />
+        ${codeMsg}
       </div>
       ${note}
-      <button class="primary-btn" id="startBtn" ${canStart?'':'disabled'} style="${canStart?'':'opacity:0.4;cursor:not-allowed'}">診断をはじめる →</button>
+      <button class="primary-btn" id="startBtn" ${canStart?'':'disabled'}
+        style="${canStart?'':'opacity:0.4;cursor:not-allowed'}">診断をはじめる →</button>
     </div>`;
 }
 
@@ -416,6 +445,29 @@ function bindEvents() {
   const ageSelect = document.getElementById("ageSelect");
   if(ageSelect) ageSelect.addEventListener("change", () => { state.age = ageSelect.value || null; render(); });
 
+  // コード入力
+  const codeInput = document.getElementById("codeInput");
+  if(codeInput) {
+    codeInput.addEventListener("input", (e) => {
+      const val = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "");
+      state.code = val;
+      e.target.value = val;
+      if(!val) { state.codeStatus = null; render(); return; }
+      // 英字2桁＋数字4桁 または 数字6桁
+      if(val.length < 6 || !/^([a-z]{2}\d{4}|\d{6})$/.test(val)) {
+        state.codeStatus = val.length < 6 ? null : "ng";
+        render(); return;
+      }
+      state.codeStatus = "checking";
+      render();
+      clearTimeout(codeCheckTimer);
+      codeCheckTimer = setTimeout(() => checkCode(val), 500);
+    });
+    // 再レンダー後もフォーカスを維持
+    codeInput.focus();
+    codeInput.setSelectionRange(codeInput.value.length, codeInput.value.length);
+  }
+
   document.querySelectorAll(".scale-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const score = parseInt(btn.dataset.score);
@@ -423,12 +475,13 @@ function bindEvents() {
       if(state.currentQ < 20) {
         go(() => { state.currentQ++; });
       } else {
-        const scores  = calcScores(state.answers);
+        const scores   = calcScores(state.answers);
         const { typeKey, infoMod } = getType(scores);
-        const encoded  = encodeAnswers(state.answers);   // 20文字の短いハッシュ
+        const encoded  = encodeAnswers(state.answers);
         const shareUrl = `${location.href.split("#")[0]}#${encoded}`;
         location.hash  = encoded;
-        saveResult({ answers:state.answers, scores, typeKey, infoMod, shareUrl, gender:state.gender, age:state.age });
+        saveResult({ answers:state.answers, scores, typeKey, infoMod, shareUrl,
+                     gender:state.gender, age:state.age, participantCode: state.code||null });
         go(() => { state.result = { scores, typeKey, infoMod, shareUrl }; state.phase="result"; });
       }
     });
@@ -455,7 +508,7 @@ function bindEvents() {
   const restartBtn = document.getElementById("restartBtn");
   if(restartBtn) restartBtn.addEventListener("click", () => {
     location.hash = "";
-    state = { phase:"intro", currentQ:1, answers:{}, result:null, shared:null, gender:null, age:null };
+    state = { phase:"intro", currentQ:1, answers:{}, result:null, shared:null, gender:null, age:null, code:"", codeStatus:null };
     render();
   });
 
@@ -474,7 +527,19 @@ function go(fn) {
 
 render();
 
-// ── GAS経由でGoogleシートに保存 ──────────────────────────
+// ── コード存在確認（Supabase） ────────────────────────────
+async function checkCode(code) {
+  try {
+    const res = await fetch(`/api/check-code?code=${encodeURIComponent(code)}`);
+    const data = await res.json();
+    state.codeStatus = data.exists ? "ok" : "ng";
+  } catch(e) {
+    state.codeStatus = "ng";
+  }
+  render();
+}
+
+// ── Supabaseに保存 ────────────────────────────────────────
 async function saveResult(payload) {
   try {
     await fetch("/api/save-result", {
@@ -482,7 +547,7 @@ async function saveResult(payload) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...payload,
-        timestamp: getJSTTimestamp(),   // ★ 日本時間
+        timestamp: getJSTTimestamp(),
       }),
     });
   } catch(e) { console.error(e); }
